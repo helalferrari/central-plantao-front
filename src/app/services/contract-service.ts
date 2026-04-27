@@ -47,7 +47,6 @@ export async function getContractById(id: string): Promise<Contract> {
     console.log(`[SERVER-FETCH] - Successfully fetched contract ID: ${id}.`);
     return data;
   } catch (error) {
-    console.error(`[SERVER-FETCH] - Error fetching contract ID: ${id}:`, error);
     throw error;
   }
 }

@@ -1,3 +1,5 @@
+import { Client } from "./client";
+
 export type ScheduleType = 
   | 'SHIFT_12X36' 
   | 'SHIFT_24X48' 
@@ -25,9 +27,11 @@ export interface ContractedShift {
 
 export interface Contract {
   id?: number;
-  name: string;
+  description: string;
   startDate: string;
   endDate: string;
   active: boolean;
+  clientId?: number;
+  client?: Client;
   contractedShifts: ContractedShift[];
 }

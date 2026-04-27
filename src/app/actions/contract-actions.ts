@@ -12,7 +12,7 @@ export async function createContractAction(
   prevState: ActionResponse | null,
   payload: Contract
 ): Promise<ActionResponse> {
-  console.log("[SERVER-ACTION] - Sending contract to backend...");
+  console.log(`[FRONT] - Processing creation for Client ID: ${payload.clientId}`);
   
   const backendUrl = `${process.env.BACKEND_URL}/api/v1/contracts`;
 
@@ -27,7 +27,6 @@ export async function createContractAction(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error("[SERVER-ACTION] - Backend error:", errorData);
       return {
         success: false,
         message: errorData.message || `API Error: ${response.status} ${response.statusText}`,
@@ -35,15 +34,12 @@ export async function createContractAction(
     }
 
     const data = await response.json();
-    console.log("[SERVER-ACTION] - Contract successfully created in backend.");
-    
     return {
       success: true,
       message: "Contrato criado com sucesso!",
       data,
     };
   } catch (error) {
-    console.error("[SERVER-ACTION] - Network/Unexpected error:", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Falha ao conectar com o servidor",
@@ -56,7 +52,7 @@ export async function updateContractAction(
   prevState: ActionResponse | null,
   payload: Contract
 ): Promise<ActionResponse> {
-  console.log(`[SERVER-ACTION] - Updating contract ID: ${id} in backend...`);
+  console.log(`[FRONT] - Processing update for Contract ID: ${id} (Client ID: ${payload.clientId})`);
   
   const backendUrl = `${process.env.BACKEND_URL}/api/v1/contracts/${id}`;
 
@@ -78,15 +74,12 @@ export async function updateContractAction(
     }
 
     const data = await response.json();
-    console.log(`[SERVER-ACTION] - Contract ID: ${id} successfully updated.`);
-    
     return {
       success: true,
       message: "Contrato atualizado com sucesso!",
       data,
     };
   } catch (error) {
-    console.error(`[SERVER-ACTION] - Error updating contract ID: ${id}:`, error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Falha ao conectar com o servidor",

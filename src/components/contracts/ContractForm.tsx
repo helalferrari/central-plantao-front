@@ -9,6 +9,7 @@ import { Button, FormInput, FormSelect, FormSection } from '@/components/ui/form
 import { Card } from '@/components/ui/base';
 import { toast } from 'sonner';
 import { Contract, Workload } from '@/types/contract';
+import { Client } from '@/types/client';
 import { useActionState, useEffect, startTransition } from 'react';
 import { ActionResponse } from '@/app/actions/contract-actions';
 
@@ -22,9 +23,10 @@ const shiftSchema = z.object({
 });
 
 const contractSchema = z.object({
-  name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
+  description: z.string().min(3, 'A descrição deve ter pelo menos 3 caracteres'),
   startDate: z.string().min(1, 'Data de início é obrigatória'),
   endDate: z.string().min(1, 'Data de término é obrigatória'),
+  clientId: z.string().min(1, 'Selecione um cliente'),
   active: z.boolean(),
   contractedShifts: z.array(shiftSchema).min(1, 'Pelo menos um plantão é obrigatório'),
 }).refine((data) => {
@@ -39,13 +41,16 @@ type ContractFormValues = z.infer<typeof contractSchema>;
 
 interface ContractFormProps {
   initialData?: Contract;
+  clients: Client[];
   action: (prevState: ActionResponse | null, payload: Contract) => Promise<ActionResponse>;
   submitLabel: string;
 }
 
-export default function ContractForm({ initialData, action, submitLabel }: ContractFormProps) {
+export default function ContractForm({ initialData, clients, action, submitLabel }: ContractFormProps) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(action, null);
+
+  const clientOptions = clients.map(c => ({ label: c.tradeName, value: String(c.id) }));
 
   const {
     register,
@@ -56,10 +61,11 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
   } = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
     defaultValues: initialData ? {
-      name: initialData.name,
+      description: initialData.description,
       startDate: initialData.startDate,
       endDate: initialData.endDate,
       active: initialData.active,
+      clientId: String(initialData.client?.id || ''),
       contractedShifts: initialData.contractedShifts,
     } : {
       active: true,
@@ -78,14 +84,13 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
     name: 'contractedShifts',
   });
 
-  // Watch for changes in schedule types to update workload automatically
   const watchedShifts = useWatch({
     control,
     name: 'contractedShifts',
   });
 
   useEffect(() => {
-    watchedShifts.forEach((shift, index) => {
+    watchedShifts?.forEach((shift, index) => {
       const schedule = shift.scheduleType;
       let targetWorkload: Workload = 'W8';
 
@@ -110,7 +115,10 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
 
   const onSubmit = (data: ContractFormValues) => {
     startTransition(() => {
-      formAction(data as unknown as Contract);
+      formAction({
+        ...data,
+        clientId: Number(data.clientId)
+      } as unknown as Contract);
     });
   };
 
@@ -119,12 +127,19 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
       {/* General Info */}
       <FormSection title="Informações Gerais" description="Detalhes básicos sobre a entidade contratante e o período.">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormInput 
-            label="Nome do Contrato" 
-            placeholder="ex: Hospital Santa Casa"
+          <FormSelect 
+            label="Cliente / Unidade" 
+            options={clientOptions}
             className="md:col-span-2"
-            error={errors.name?.message}
-            {...register('name')}
+            error={errors.clientId?.message}
+            {...register('clientId')}
+          />
+          <FormInput 
+            label="Descrição do Contrato" 
+            placeholder="ex: Contrato de Prestação de Serviços - 2024"
+            className="md:col-span-2"
+            error={errors.description?.message}
+            {...register('description')}
           />
           <FormInput 
             label="Data de Início" 
@@ -223,7 +238,7 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
                     {...register(`contractedShifts.${index}.workload`)}
                   />
                   <p className="text-[10px] text-slate-500 italic leading-tight">
-                    Fixed based on Schedule.
+                    Fixo baseado na escala.
                   </p>
                 </div>
               </div>

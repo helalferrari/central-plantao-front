@@ -42,7 +42,10 @@ export default async function ContractsPage() {
             <Card key={contract.id} className="p-4 space-y-4">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-slate-900 leading-tight">{contract.name}</h3>
+                  <h3 className="font-bold text-slate-900 leading-tight">{contract.description}</h3>
+                  <div className="flex items-center gap-1.5 text-[10px] text-blue-600 font-medium">
+                    <span>{contract.client?.tradeName}</span>
+                  </div>
                   <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <Calendar size={12} />
                     <span>{new Date(contract.startDate).toLocaleDateString('pt-BR')} - {new Date(contract.endDate).toLocaleDateString('pt-BR')}</span>
@@ -68,16 +71,16 @@ export default async function ContractsPage() {
       {/* DESKTOP TABLE */}
       <Card className="hidden md:block overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Nome</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Período</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Ações</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase text-xs">Descrição / Cliente</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase text-xs">Período</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase text-xs">Status</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase text-xs text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 text-slate-700">
               {contracts.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
@@ -88,11 +91,11 @@ export default async function ContractsPage() {
                 contracts.map((contract) => (
                   <tr key={contract.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{contract.name}</div>
-                      <div className="text-xs text-slate-500 font-mono">ID: #{contract.id}</div>
+                      <div className="font-medium text-slate-900">{contract.description}</div>
+                      <div className="text-xs text-blue-600">{contract.client?.tradeName}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-slate-400" />
                         {new Date(contract.startDate).toLocaleDateString('pt-BR')} - {new Date(contract.endDate).toLocaleDateString('pt-BR')}
                       </div>

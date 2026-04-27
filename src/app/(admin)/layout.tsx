@@ -7,6 +7,7 @@ import {
   LayoutDashboard, 
   FileText, 
   Users, 
+  Building,
   Settings, 
   Menu, 
   X,
@@ -16,6 +17,7 @@ import {
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Contratos', href: '/contracts', icon: FileText },
+  { name: 'Clientes', href: '/clients', icon: Building },
   { name: 'Profissionais', href: '/professionals', icon: Users },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];

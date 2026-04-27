@@ -2,10 +2,11 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/form-components';
 import ContractForm from '@/components/contracts/ContractForm';
 import { createContractAction } from '@/app/actions/contract-actions';
+import { getClients } from '@/app/services/client-service';
 import Link from 'next/link';
 
-export default function NewContractPage() {
-  // Bind null for creation (no ID needed in first param of createContractAction)
+export default async function NewContractPage() {
+  const clients = await getClients();
   const createAction = createContractAction.bind(null);
 
   return (
@@ -27,6 +28,7 @@ export default function NewContractPage() {
       </div>
 
       <ContractForm 
+        clients={clients}
         action={createAction} 
         submitLabel="Criar Contrato" 
       />
