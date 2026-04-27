@@ -1,12 +1,10 @@
-'use client'
-
-import { Plus, Search, MoreHorizontal, Calendar } from 'lucide-react';
-import { useContracts } from '@/hooks/useContracts';
+import { Plus, Search, MoreHorizontal, Calendar, Info } from 'lucide-react';
 import { Button, Badge, Card } from '@/components/ui/base';
 import Link from 'next/link';
+import { getContracts } from '@/app/services/contract-service';
 
-export default function ContractsPage() {
-  const { contracts, isLoading, error } = useContracts();
+export default async function ContractsPage() {
+  const contracts = await getContracts().catch(() => []);
 
   return (
     <div className="space-y-6">
@@ -30,7 +28,7 @@ export default function ContractsPage() {
             <input 
               type="text" 
               placeholder="Pesquisar contratos..." 
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
           </div>
         </div>
@@ -46,25 +44,13 @@ export default function ContractsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
+              {contracts.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                      Carregando contratos...
+                      <Info className="text-slate-300" size={32} />
+                      <p>Nenhum contrato encontrado.</p>
                     </div>
-                  </td>
-                </tr>
-              ) : error ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-red-500 bg-red-50">
-                    Erro ao carregar contratos: {error}
-                  </td>
-                </tr>
-              ) : contracts.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                    Nenhum contrato encontrado.
                   </td>
                 </tr>
               ) : (

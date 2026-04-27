@@ -7,17 +7,17 @@ import * as z from 'zod';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Button, FormInput, FormSelect, FormSection } from '@/components/ui/form-components';
 import { Card } from '@/components/ui/base';
-import { apiFetch } from '@/lib/api';
 import { toast } from 'sonner';
-import { ProfessionalType, ScheduleType, Workload } from '@/types/contract';
+import { createContractAction } from '@/app/actions/contract-actions';
+import { useActionState, useEffect, startTransition } from 'react';
 
 // --- VALIDATION SCHEMA ---
 const shiftSchema = z.object({
   sectorDescription: z.string().min(1, 'O setor é obrigatório'),
-  professionalType: z.string().min(1, 'Selecione o tipo de profissional'),
-  scheduleType: z.string().min(1, 'Selecione o tipo de escala'),
+  professionalType: z.enum(['PEDIATRICIAN', 'OBSTETRICIAN_GYNECOLOGIST', 'GENERAL_PRACTITIONER', 'NURSE', 'NURSING_TECHNICIAN']),
+  scheduleType: z.enum(['SHIFT_12X36', 'SHIFT_24X48', 'SHIFT_6X1', 'SHIFT_5X2', 'SHIFT_4X3']),
   slotQuantity: z.number().min(1, 'Mínimo de 1 posto'),
-  workload: z.string().min(1, 'A carga horária é obrigatória'),
+  workload: z.enum(['W12', 'W24']),
 });
 
 const contractSchema = z.object({
@@ -39,11 +39,13 @@ type ContractFormValues = z.infer<typeof contractSchema>;
 export default function NewContractPage() {
   const router = useRouter();
   
+  const [state, formAction, isPending] = useActionState(createContractAction, null);
+
   const {
     register,
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
     defaultValues: {
@@ -51,9 +53,9 @@ export default function NewContractPage() {
       contractedShifts: [{ 
         sectorDescription: '', 
         slotQuantity: 1, 
-        workload: 'W12' as Workload, 
-        professionalType: 'GENERAL_PRACTITIONER' as ProfessionalType, 
-        scheduleType: 'SHIFT_12X36' as ScheduleType 
+        workload: 'W12', 
+        professionalType: 'GENERAL_PRACTITIONER', 
+        scheduleType: 'SHIFT_12X36' 
       }],
     },
   });
@@ -63,22 +65,23 @@ export default function NewContractPage() {
     name: 'contractedShifts',
   });
 
-  const onSubmit = async (data: ContractFormValues) => {
-    try {
-      await apiFetch('/contracts', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      toast.success('Contrato criado com sucesso!');
+  useEffect(() => {
+    if (state?.success) {
+      toast.success(state.message);
       router.push('/contracts');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Falha ao criar contrato');
+    } else if (state?.success === false) {
+      toast.error(state.message);
     }
+  }, [state, router]);
+
+  const onSubmit = (data: ContractFormValues) => {
+    startTransition(() => {
+      formAction(data);
+    });
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
@@ -96,7 +99,6 @@ export default function NewContractPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
-        {/* General Info */}
         <FormSection title="Informações Gerais" description="Detalhes básicos sobre a entidade contratante e o período.">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormInput 
@@ -121,7 +123,6 @@ export default function NewContractPage() {
           </div>
         </FormSection>
 
-        {/* Duty Contracts / Shifts */}
         <div className="space-y-4 pt-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -135,9 +136,9 @@ export default function NewContractPage() {
               onClick={() => append({ 
                 sectorDescription: '', 
                 slotQuantity: 1, 
-                workload: 'W12' as Workload, 
-                professionalType: 'GENERAL_PRACTITIONER' as ProfessionalType, 
-                scheduleType: 'SHIFT_12X36' as ScheduleType 
+                workload: 'W12', 
+                professionalType: 'GENERAL_PRACTITIONER', 
+                scheduleType: 'SHIFT_12X36' 
               })}
               className="gap-2"
             >
@@ -215,12 +216,11 @@ export default function NewContractPage() {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
           <Button variant="ghost" type="button" onClick={() => router.back()}>
             Cancelar
           </Button>
-          <Button type="submit" isLoading={isSubmitting} className="px-8">
+          <Button type="submit" isLoading={isPending} className="px-8">
             Criar Contrato
           </Button>
         </div>
