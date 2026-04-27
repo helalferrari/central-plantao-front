@@ -1,14 +1,14 @@
 'use client'
 
 import { useRouter } from 'next/navigation';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, FormInput, FormSelect, FormSection } from '@/components/ui/form-components';
 import { Card } from '@/components/ui/base';
 import { toast } from 'sonner';
-import { Contract } from '@/types/contract';
+import { Contract, Workload } from '@/types/contract';
 import { useActionState, useEffect, startTransition } from 'react';
 import { ActionResponse } from '@/app/actions/contract-actions';
 
@@ -18,7 +18,7 @@ const shiftSchema = z.object({
   professionalType: z.enum(['PEDIATRICIAN', 'OBSTETRICIAN_GYNECOLOGIST', 'GENERAL_PRACTITIONER', 'NURSE', 'NURSING_TECHNICIAN']),
   scheduleType: z.enum(['SHIFT_12X36', 'SHIFT_24X48', 'SHIFT_6X1', 'SHIFT_5X2', 'SHIFT_4X3']),
   slotQuantity: z.number().min(1, 'Mínimo de 1 posto'),
-  workload: z.enum(['W12', 'W24']),
+  workload: z.enum(['W8', 'W12', 'W24']),
 });
 
 const contractSchema = z.object({
@@ -51,6 +51,7 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
@@ -76,6 +77,26 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
     control,
     name: 'contractedShifts',
   });
+
+  // Watch for changes in schedule types to update workload automatically
+  const watchedShifts = useWatch({
+    control,
+    name: 'contractedShifts',
+  });
+
+  useEffect(() => {
+    watchedShifts.forEach((shift, index) => {
+      const schedule = shift.scheduleType;
+      let targetWorkload: Workload = 'W8';
+
+      if (schedule === 'SHIFT_24X48') targetWorkload = 'W24';
+      else if (schedule === 'SHIFT_12X36') targetWorkload = 'W12';
+
+      if (shift.workload !== targetWorkload) {
+        setValue(`contractedShifts.${index}.workload`, targetWorkload);
+      }
+    });
+  }, [watchedShifts, setValue]);
 
   useEffect(() => {
     if (state?.success) {
@@ -189,15 +210,22 @@ export default function ContractForm({ initialData, action, submitLabel }: Contr
                   error={errors.contractedShifts?.[index]?.slotQuantity?.message}
                   {...register(`contractedShifts.${index}.slotQuantity`, { valueAsNumber: true })}
                 />
-                <FormSelect 
-                  label="Carga Horária" 
-                  options={[
-                    { label: '12h', value: 'W12' },
-                    { label: '24h', value: 'W24' },
-                  ]}
-                  error={errors.contractedShifts?.[index]?.workload?.message}
-                  {...register(`contractedShifts.${index}.workload`)}
-                />
+                <div className="space-y-1.5">
+                  <FormSelect 
+                    label="Carga Horária" 
+                    className="bg-slate-50 pointer-events-none opacity-80"
+                    options={[
+                      { label: '8h', value: 'W8' },
+                      { label: '12h', value: 'W12' },
+                      { label: '24h', value: 'W24' },
+                    ]}
+                    error={errors.contractedShifts?.[index]?.workload?.message}
+                    {...register(`contractedShifts.${index}.workload`)}
+                  />
+                  <p className="text-[10px] text-slate-500 italic leading-tight">
+                    Fixed based on Schedule.
+                  </p>
+                </div>
               </div>
               
               {fields.length > 1 && (

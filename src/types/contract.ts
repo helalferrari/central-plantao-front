@@ -12,7 +12,7 @@ export type ProfessionalType =
   | 'NURSE' 
   | 'NURSING_TECHNICIAN';
 
-export type Workload = 'W12' | 'W24';
+export type Workload = 'W8' | 'W12' | 'W24';
 
 export interface ContractedShift {
   id?: number;
