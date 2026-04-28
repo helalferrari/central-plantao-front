@@ -18,6 +18,7 @@ const shiftSchema = z.object({
   sectorDescription: z.string().min(1, 'O setor é obrigatório'),
   professionalType: z.enum(['PEDIATRICIAN', 'OBSTETRICIAN_GYNECOLOGIST', 'GENERAL_PRACTITIONER', 'NURSE', 'NURSING_TECHNICIAN']),
   scheduleType: z.enum(['SHIFT_12X36', 'SHIFT_24X48', 'SHIFT_6X1', 'SHIFT_5X2', 'SHIFT_4X3']),
+  startHour: z.string().min(1, 'O horário de início é obrigatório'),
   slotQuantity: z.number().min(1, 'Mínimo de 1 posto'),
   workload: z.enum(['W8', 'W12', 'W24']),
 });
@@ -71,6 +72,7 @@ export default function ContractForm({ initialData, clients, action, submitLabel
       active: true,
       contractedShifts: [{ 
         sectorDescription: '', 
+        startHour: '07:00:00',
         slotQuantity: 1, 
         workload: 'W12', 
         professionalType: 'GENERAL_PRACTITIONER', 
@@ -114,11 +116,18 @@ export default function ContractForm({ initialData, clients, action, submitLabel
   }, [state, router]);
 
   const onSubmit = (data: ContractFormValues) => {
+    // API expects full time, e.g. 07:00:00. Time inputs usually give HH:mm.
+    const payload = {
+      ...data,
+      clientId: Number(data.clientId),
+      contractedShifts: data.contractedShifts.map(shift => ({
+        ...shift,
+        startHour: shift.startHour.length === 5 ? `${shift.startHour}:00` : shift.startHour
+      }))
+    };
+    
     startTransition(() => {
-      formAction({
-        ...data,
-        clientId: Number(data.clientId)
-      } as unknown as Contract);
+      formAction(payload as unknown as Contract);
     });
   };
 
@@ -169,6 +178,7 @@ export default function ContractForm({ initialData, clients, action, submitLabel
             size="sm" 
             onClick={() => append({ 
               sectorDescription: '', 
+              startHour: '07:00:00',
               slotQuantity: 1, 
               workload: 'W12', 
               professionalType: 'GENERAL_PRACTITIONER', 
@@ -225,6 +235,14 @@ export default function ContractForm({ initialData, clients, action, submitLabel
                   error={errors.contractedShifts?.[index]?.slotQuantity?.message}
                   {...register(`contractedShifts.${index}.slotQuantity`, { valueAsNumber: true })}
                 />
+                {watchedShifts?.[index]?.scheduleType === 'SHIFT_12X36' && (
+                  <FormInput 
+                    label="Horário Início" 
+                    type="time"
+                    error={errors.contractedShifts?.[index]?.startHour?.message}
+                    {...register(`contractedShifts.${index}.startHour`)}
+                  />
+                )}
                 <div className="space-y-1.5">
                   <FormSelect 
                     label="Carga Horária" 

@@ -55,7 +55,13 @@ export default async function ContractsPage() {
                   {contract.active ? 'Ativo' : 'Inativo'}
                 </Badge>
               </div>
-              <div className="pt-2 border-t border-slate-100 flex justify-end">
+              <div className="pt-2 border-t border-slate-100 flex justify-end gap-2">
+                <Link href={`/contracts/${contract.id}/schedule`}>
+                  <Button variant="outline" size="sm" className="gap-2 border-green-200 text-green-700 hover:bg-green-50">
+                    <Calendar size={14} />
+                    Agenda
+                  </Button>
+                </Link>
                 <Link href={`/contracts/edit/${contract.id}`}>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Pencil size={14} />
@@ -107,6 +113,11 @@ export default async function ContractsPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
+                        <Link href={`/contracts/${contract.id}/schedule`}>
+                          <Button variant="ghost" size="sm" title="Ver Agenda">
+                            <Calendar size={18} className="text-slate-400 hover:text-green-600" />
+                          </Button>
+                        </Link>
                         <Link href={`/contracts/edit/${contract.id}`}>
                           <Button variant="ghost" size="sm" title="Editar">
                             <Pencil size={18} className="text-slate-400 hover:text-blue-600" />

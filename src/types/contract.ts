@@ -20,6 +20,7 @@ export interface ContractedShift {
   id?: number;
   sectorDescription: string;
   slotQuantity: number;
+  startHour: string;
   workload: Workload;
   scheduleType: ScheduleType;
   professionalType: ProfessionalType;
